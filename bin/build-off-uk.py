@@ -68,6 +68,11 @@ def g1(v):
     return "" if v is None else "%.1f" % v
 
 
+def g2(v):
+    # Salt only: 0.05 g per 100 g matters on a food diary, so it keeps 2 dp.
+    return "" if v is None else "%.2f" % v
+
+
 def clean(s, maxlen):
     s = WS_RE.sub(" ", (s or "").replace("\x00", "")).strip()
     return s[:maxlen].strip()
@@ -111,7 +116,7 @@ def process_row(row):
     updated = datetime.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d") if ts > 0 else ""
     out = [code, name, brand, unit, str(int(round(kcal))), g1(protein), g1(carbs),
            g1(num(row, "sugars_100g")), g1(fat), g1(num(row, "saturated-fat_100g")),
-           g1(num(row, "fiber_100g")), g1(salt), serving_qty,
+           g1(num(row, "fiber_100g")), g2(salt), serving_qty,
            clean(row.get("serving_size"), 60), updated]
     return None, (ts, out)
 

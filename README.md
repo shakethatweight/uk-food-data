@@ -25,7 +25,8 @@ gzipped UTF-8 CSV, RFC 4180 (CRLF line ends), header row, one row per product. N
 | `brand` | first brand only, max 100 chars, may be empty |
 | `unit` | `ml` if the pack quantity is a volume (ml/cl/dl/l), else `g` |
 | `kcal` | integer; from `energy-kcal_100g`, else `energy-kj_100g` / 4.184 |
-| `protein`, `carbs`, `sugars`, `fat`, `saturates`, `fibre`, `salt` | grams, 1 dp; empty if unknown (sugars/saturates/fibre/salt may be empty). Salt falls back to sodium x 2.5 |
+| `protein`, `carbs`, `sugars`, `fat`, `saturates`, `fibre` | grams, 1 dp; empty if unknown (sugars/saturates/fibre may be empty) |
+| `salt` | grams, **2 dp** (0.05 g matters); empty if unknown. Falls back to sodium x 2.5 |
 | `serving_qty` | grams/ml from `serving_quantity` if 0 < x <= 2000, else empty |
 | `serving_label` | `serving_size` text, max 60 chars, may be empty |
 | `source_updated` | `last_modified_t` as `YYYY-MM-DD` (UTC) |
@@ -41,6 +42,12 @@ python3 bin/build-off-uk.py --input export.csv.gz --outdir out                  
 ```
 
 Needs Python 3.9+ (standard library only) and, for `publish.sh`, an authenticated `gh` and `systemd-run --user` (the build runs in a 1.5 GB memory-capped cgroup). The raw download is deleted after a successful build.
+
+## Changelog
+
+- **1.0.2**: `salt` is written to 2 dp (was 1 dp, which lost values like 0.05 g). Other grams stay 1 dp, kcal an integer.
+- **1.0.1**: GTIN-14 (trade-unit) barcodes are dropped.
+- **1.0.0**: first release.
 
 ## Licence
 
