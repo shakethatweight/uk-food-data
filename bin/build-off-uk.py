@@ -9,6 +9,7 @@ Contains data from Open Food Facts, available under the Open Database License.
 import argparse
 import csv
 import datetime
+from decimal import Decimal, ROUND_HALF_UP
 import gzip
 import io
 import json
@@ -64,13 +65,32 @@ def num(row, key):
     return f
 
 
+def round_half_up(v, places):
+    """Round half away from zero on the value's shortest decimal text (0.25 -> 0.3, 0.285 -> 0.29).
+
+    Python's round() and "%.1f" round ties to even (0.25 -> 0.2) and look at the binary
+    value, while the WordPress side and the API contract round half away from zero on
+    the decimal value. STW_MJ_Food_Off::round_half_up() is the PHP copy: change both together.
+    """
+    d = Decimal(repr(float(v))).quantize(Decimal(1).scaleb(-places), rounding=ROUND_HALF_UP)
+    return abs(d) if d == 0 else d  # No "-0.0".
+
+
 def g1(v):
-    return "" if v is None else "%.1f" % v
+    return "" if v is None else format(round_half_up(v, 1), "f")
 
 
 def g2(v):
     # Salt only: 0.05 g per 100 g matters on a food diary, so it keeps 2 dp.
-    return "" if v is None else "%.2f" % v
+    return "" if v is None else format(round_half_up(v, 2), "f")
+
+
+def serving_text(v):
+    """serving_quantity to 1 dp without trailing zeros ("207", "33.5"), like PHP (string) round()."""
+    text = format(round_half_up(v, 1), "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text or "0"
 
 
 def clean(s, maxlen):
@@ -108,13 +128,13 @@ def process_row(row):
     brand = clean((row.get("brands") or "").split(",")[0], 100)
     unit = "ml" if LIQUID_RE.search(row.get("quantity") or "") else "g"
     sq = num(row, "serving_quantity")
-    serving_qty = ("%g" % round(sq, 1)) if sq is not None and 0 < sq <= 2000 else ""
+    serving_qty = serving_text(sq) if sq is not None and 0 < sq <= 2000 else ""
     try:
         ts = int(row.get("last_modified_t") or 0)
     except ValueError:
         ts = 0
     updated = datetime.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d") if ts > 0 else ""
-    out = [code, name, brand, unit, str(int(round(kcal))), g1(protein), g1(carbs),
+    out = [code, name, brand, unit, str(int(round_half_up(kcal, 0))), g1(protein), g1(carbs),
            g1(num(row, "sugars_100g")), g1(fat), g1(num(row, "saturated-fat_100g")),
            g1(num(row, "fiber_100g")), g2(salt), serving_qty,
            clean(row.get("serving_size"), 60), updated]

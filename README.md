@@ -31,6 +31,8 @@ gzipped UTF-8 CSV, RFC 4180 (CRLF line ends), header row, one row per product. N
 | `serving_label` | `serving_size` text, max 60 chars, may be empty |
 | `source_updated` | `last_modified_t` as `YYYY-MM-DD` (UTC) |
 
+**Rounding** is half away from zero on the value's decimal text (0.25 to 1 dp is 0.3, 80.5 kcal is 81, 0.125 salt is 0.13), not Python's round-half-to-even or the binary value. This is the rule of the MyJurnee API contract, and the WordPress side (`STW_MJ_Food_Off::round_half_up()`) uses the same one, so a live lookup and this file give identical rows. `serving_qty` is rounded to 1 dp and written without trailing zeros (`207`, `33.3`).
+
 Note: the export has no `product_name_en` or `nutrition_data_per` columns, so `name` uses `product_name` and `unit` is inferred from the pack `quantity` text.
 
 ## Running it
@@ -45,6 +47,7 @@ Needs Python 3.9+ (standard library only) and, for `publish.sh`, an authenticate
 
 ## Changelog
 
+- **1.0.3**: kcal, `serving_qty` and the 1 dp / 2 dp nutrients round half away from zero on the decimal text. Before, Python's `round()` (kcal, serving) and `%.1f` / `%.2f` (grams) rounded ties to even on the binary value, so 80.5 kcal gave 80 and 0.25 g gave 0.2, which disagreed with the live lookup and the API contract. Adds `tests/test_rounding.py`.
 - **1.0.2**: `salt` is written to 2 dp (was 1 dp, which lost values like 0.05 g). Other grams stay 1 dp, kcal an integer.
 - **1.0.1**: GTIN-14 (trade-unit) barcodes are dropped.
 - **1.0.0**: first release.
