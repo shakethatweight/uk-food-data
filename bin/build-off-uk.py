@@ -41,7 +41,9 @@ def download(workdir):
 
 
 def valid_gtin(code):
-    if not code.isdigit() or len(code) not in (8, 12, 13, 14):
+    # EAN-8, UPC-A and EAN-13 only: what a phone scans on a consumer pack and what
+    # the WordPress importer accepts. GTIN-14 marks trade units (outer cases).
+    if not code.isdigit() or len(code) not in (8, 12, 13):
         return False
     digits = [int(c) for c in code]
     check = digits.pop()

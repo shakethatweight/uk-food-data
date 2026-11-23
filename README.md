@@ -9,7 +9,7 @@ A slim, UK-only extract of the [Open Food Facts](https://world.openfoodfacts.org
 Built from the official Open Food Facts CSV export (`en.openfoodfacts.org.products.csv.gz`, tab-separated, streamed without unpacking).
 
 - UK only: `countries_tags` contains `en:united-kingdom`.
-- Barcode must be digits only with a valid GTIN check digit (EAN-8, UPC-A, EAN-13, GTIN-14).
+- Barcode must be digits only with a valid GTIN check digit: EAN-8, UPC-A or EAN-13. GTIN-14 (trade units such as outer cases) is dropped as `bad_barcode`, since no consumer pack carries one.
 - Must have a product name.
 - Must have kcal, protein, carbs and fat; kcal between 0 and 900; protein + carbs + fat no more than 105 g per 100 g.
 - One row per barcode (latest `last_modified_t` wins).
@@ -20,7 +20,7 @@ gzipped UTF-8 CSV, RFC 4180 (CRLF line ends), header row, one row per product. N
 
 | Column | Notes |
 |---|---|
-| `barcode` | digits, 8-14 chars |
+| `barcode` | digits, 8, 12 or 13 chars (leading zeros kept; the file is text) |
 | `name` | `product_name`, whitespace collapsed, max 191 chars |
 | `brand` | first brand only, max 100 chars, may be empty |
 | `unit` | `ml` if the pack quantity is a volume (ml/cl/dl/l), else `g` |
